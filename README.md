@@ -2,6 +2,16 @@
 
 A Twirp RPC Swagger/OpenAPI 2.0 generator 
 
+# Usage
+
+```
+go get github.com/go-bridget/twirp-swagger-gen
+go run github.com/go-bridget/twirp-swagger-gen \
+	-in example/example.proto \
+	-out example/example.swagger.json \
+	-host test.example.com
+```
+
 # Why?
 
 The project
