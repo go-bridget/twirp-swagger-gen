@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package apm;
+
+option go_package = "example.com/apm";
+
+service ApmService {
+	// Stats for APM dispatch
+	rpc Stats(StatsRequest) returns (StatsResponse);
+
+	// Add APM payload
+	rpc Add(AddRequest) returns (AddResponse);
+}
+
+message StatsRequest {}
+message StatsResponse {
+	int64 received = 1;
+	int64 sent = 2;
+	int64 retries = 3;
+	int64 errors = 4;
+}
+
+message AddRequest {
+	string targetURL = 1;
+	string payload = 2;
+}
+message AddResponse {}
