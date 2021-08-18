@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package apm;
+package apm.v1;
 
 option go_package = "example.com/apm";
 
@@ -12,7 +12,11 @@ service ApmService {
 	rpc Add(AddRequest) returns (AddResponse);
 }
 
-message StatsRequest {}
+message StatsRequest {
+	float price = 1;
+	double double_price = 2;
+}
+
 message StatsResponse {
 	int64 received = 1;
 	int64 sent = 2;

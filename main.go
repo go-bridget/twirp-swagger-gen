@@ -1,14 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"strings"
-
-	"encoding/json"
-	"io/ioutil"
 
 	"github.com/apex/log"
 	"github.com/davecgh/go-spew/spew"
@@ -19,19 +18,41 @@ import (
 
 var _ = spew.Dump
 
+var (
+	Version   string
+	GitCommit string
+	BuildTime string
+
+	// flags
+	in              string
+	out             string
+	host            string
+	twirpPathPrefix string
+
+	allowedValues = []string{
+		"boolean",
+		"integer",
+		"number",
+		"object",
+		"string",
+	}
+)
+
 type SwaggerWriter struct {
 	*spec.Swagger
 
 	hostname    string
 	filename    string
+	pathPrefix  string
 	packageName string
 }
 
-func NewSwaggerWriter(filename string, hostname string) *SwaggerWriter {
+func NewSwaggerWriter(filename string, pathPrefix, hostname string) *SwaggerWriter {
 	return &SwaggerWriter{
-		filename: filename,
-		hostname: hostname,
-		Swagger:  &spec.Swagger{},
+		filename:   filename,
+		pathPrefix: pathPrefix,
+		hostname:   hostname,
+		Swagger:    &spec.Swagger{},
 	}
 }
 
@@ -89,16 +110,20 @@ func comment(comment *proto.Comment) string {
 	}
 
 	result := ""
+
 	for _, line := range comment.Lines {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			break
 		}
+
 		result += " " + line
 	}
+
 	if len(result) > 1 {
 		return result[1:]
 	}
+
 	return ""
 }
 
@@ -132,7 +157,7 @@ func (sw *SwaggerWriter) RPC(rpc *proto.RPC) {
 		panic("parent is not proto.service")
 	}
 
-	pathName := fmt.Sprintf("/twirp/%s.%s/%s", sw.packageName, parent.Name, rpc.Name)
+	pathName := fmt.Sprintf("/%s/%s.%s/%s", strings.TrimLeft(sw.pathPrefix, "/"), sw.packageName, parent.Name, rpc.Name)
 
 	sw.Swagger.Paths.Paths[pathName] = spec.PathItem{
 		PathItemProps: spec.PathItemProps{
@@ -149,7 +174,7 @@ func (sw *SwaggerWriter) RPC(rpc *proto.RPC) {
 										Description: "A successful response.",
 										Schema: &spec.Schema{
 											SchemaProps: spec.SchemaProps{
-												Ref: spec.MustCreateRef(fmt.Sprintf("#/definitions/%s%s", sw.packageName, rpc.ReturnsType)),
+												Ref: spec.MustCreateRef(fmt.Sprintf("#/definitions/%s_%s", sw.packageName, rpc.ReturnsType)),
 											},
 										},
 									},
@@ -158,14 +183,14 @@ func (sw *SwaggerWriter) RPC(rpc *proto.RPC) {
 						},
 					},
 					Parameters: []spec.Parameter{
-						spec.Parameter{
+						{
 							ParamProps: spec.ParamProps{
 								Name:     "body",
 								In:       "body",
 								Required: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: spec.MustCreateRef(fmt.Sprintf("#/definitions/%s%s", sw.packageName, rpc.RequestType)),
+										Ref: spec.MustCreateRef(fmt.Sprintf("#/definitions/%s_%s", sw.packageName, rpc.RequestType)),
 									},
 								},
 							},
@@ -178,17 +203,9 @@ func (sw *SwaggerWriter) RPC(rpc *proto.RPC) {
 }
 
 func (sw *SwaggerWriter) Message(msg *proto.Message) {
-	definitionName := fmt.Sprintf("%s%s", sw.packageName, msg.Name)
+	definitionName := fmt.Sprintf("%s_%s", sw.packageName, msg.Name)
 
 	schemaProps := make(map[string]spec.Schema)
-
-	var allowedValues = []string{
-		"boolean",
-		"integer",
-		"number",
-		"object",
-		"string",
-	}
 
 	find := func(haystack []string, needle string) (int, bool) {
 		for k, v := range haystack {
@@ -209,16 +226,31 @@ func (sw *SwaggerWriter) Message(msg *proto.Message) {
 				fieldType        = val.Field.Type
 				fieldFormat      = val.Field.Type
 			)
-			if fieldType == "bool" {
+
+			switch val.Field.Type {
+			case "string", "bytes":
+				fieldType = "string"
+			case "bool":
 				fieldType = "boolean"
 				fieldFormat = "boolean"
-			}
-			if fieldType == "int64" || fieldType == "uint64" {
-				fieldType = "string"
-			}
-			if strings.HasPrefix(fieldType, "int") || strings.HasPrefix(fieldType, "uint") {
+			case "int64", "uint64", "sint64", "fixed64":
 				fieldType = "integer"
+				fieldFormat = "int64"
+			case "byte", "int",
+				"int8", "int16",
+				"int32", "uint",
+				"uint8", "uint16", "uint32",
+				"sint32", "fixed32":
+				fieldType = "integer"
+				fieldFormat = ""
+			case "float", "float64":
+				fieldType = "number"
+				fieldFormat = "float"
+			case "double":
+				fieldType = "number"
+				fieldFormat = "double"
 			}
+
 			if fieldType != "boolean" && fieldType == fieldFormat {
 				fieldFormat = ""
 			}
@@ -255,9 +287,10 @@ func (sw *SwaggerWriter) Message(msg *proto.Message) {
 
 			// Prefix rich type with package name
 			if !strings.Contains(fieldType, ".") {
-				fieldType = sw.packageName + "." + fieldType
+				fieldType = sw.packageName + "_" + fieldType
 			}
-			ref := fmt.Sprintf("#/definitions/%s", strings.ReplaceAll(fieldType, ".", ""))
+
+			ref := fmt.Sprintf("#/definitions/%s", fieldType)
 			// fmt.Sprintf("#/definitions/%s%s", sw.packageName, fieldType)
 
 			if val.Repeated {
@@ -312,6 +345,7 @@ func (sw *SwaggerWriter) Save(filename string) error {
 	body := sw.Get()
 	return ioutil.WriteFile(filename, body, os.ModePerm^0111)
 }
+
 func (sw *SwaggerWriter) Get() []byte {
 	b, _ := json.MarshalIndent(sw, "", "  ")
 	return b
@@ -328,12 +362,12 @@ func loadProtoFile(filename string) (*proto.Proto, error) {
 	return parser.Parse()
 }
 
-func parse(hostname, filename, output string) error {
+func parse(hostname, filename, pathPrefix, output string) error {
 	if filename == output {
 		return errors.New("output file must be different than input file")
 	}
 
-	writer := NewSwaggerWriter(filename, hostname)
+	writer := NewSwaggerWriter(filename, pathPrefix, hostname)
 
 	definition, err := loadProtoFile(filename)
 	if err != nil {
@@ -347,14 +381,12 @@ func parse(hostname, filename, output string) error {
 }
 
 func main() {
-	var (
-		in   string
-		out  string
-		host string
-	)
+	fmt.Println("twirp-swagger-gen version:", Version, BuildTime, GitCommit)
+
 	flag.StringVar(&in, "in", "", "Input source .proto file")
 	flag.StringVar(&out, "out", "", "Output swagger.json file")
 	flag.StringVar(&host, "host", "api.example.com", "API host name")
+	flag.StringVar(&twirpPathPrefix, "prefix", "/api", "path prefix of twirp routes")
 	flag.Parse()
 
 	if in == "" {
@@ -367,7 +399,7 @@ func main() {
 		log.Fatalf("Missing parameter: -host [api.example.com]")
 	}
 
-	if err := parse(host, in, out); err != nil {
+	if err := parse(host, in, twirpPathPrefix, out); err != nil {
 		log.WithError(err).Fatal("exit with error")
 	}
 }
