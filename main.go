@@ -200,6 +200,8 @@ func (sw *SwaggerWriter) Message(msg *proto.Message) {
 		return -1, false
 	}
 
+	var fieldOrder = []string{}
+
 	for _, element := range msg.Elements {
 		switch val := element.(type) {
 		case *proto.Oneof:
@@ -228,6 +230,8 @@ func (sw *SwaggerWriter) Message(msg *proto.Message) {
 			if fieldType != "boolean" && fieldType == fieldFormat {
 				fieldFormat = ""
 			}
+
+			fieldOrder = append(fieldOrder, fieldName)
 
 			if _, ok := find(allowedValues, fieldType); ok {
 				fieldSchema := spec.Schema{
@@ -295,10 +299,15 @@ func (sw *SwaggerWriter) Message(msg *proto.Message) {
 		}
 	}
 
+	schemaDesc := description(msg.Comment)
+	if len(fieldOrder) > 0 {
+		schemaDesc = schemaDesc + "\n\nFields: " + strings.Join(fieldOrder, ", ")
+	}
+
 	sw.Swagger.Definitions[definitionName] = spec.Schema{
 		SchemaProps: spec.SchemaProps{
 			Title:       comment(msg.Comment),
-			Description: description(msg.Comment),
+			Description: strings.TrimSpace(schemaDesc),
 			Type:        spec.StringOrArray([]string{"object"}),
 			Properties:  schemaProps,
 		},
