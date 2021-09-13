@@ -68,7 +68,8 @@ func (sw *SwaggerWriter) Import(i *proto.Import) {
 
 	definition, err := loadProtoFile(i.Filename)
 	if err != nil {
-		panic(err)
+		log.Infof("Can't load %s, err=%s, ignoring", i.Filename, err)
+		return
 	}
 
 	oldPackageName := sw.packageName
@@ -201,6 +202,11 @@ func (sw *SwaggerWriter) Message(msg *proto.Message) {
 
 	for _, element := range msg.Elements {
 		switch val := element.(type) {
+		case *proto.Oneof:
+			// TODO: feel free to submit a PR. The fields listed in "oneof"
+			// should be unpacked and handled like *proto.NormalField below
+			log.Infof("Need to implement *proto.Oneof, want to make a PR?")
+			break
 		case *proto.NormalField:
 			var (
 				fieldTitle       = comment(val.Field.Comment)
