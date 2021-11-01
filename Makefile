@@ -7,6 +7,7 @@ build:
 
 test:
 	./build/twirp-swagger-gen -in example/example.proto -out example/example.swagger.json -host test.example.com
+	./build/twirp-swagger-gen -in example/google_timestamp.proto -out example/google_timestamp.swagger.json -host test.example.com
 
 clean:
 	go fmt ./...

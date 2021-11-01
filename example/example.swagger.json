@@ -73,6 +73,7 @@
   },
   "definitions": {
     "apmAddRequest": {
+      "description": "Fields: targetURL, payload",
       "type": "object",
       "properties": {
         "payload": {
@@ -90,6 +91,7 @@
       "type": "object"
     },
     "apmStatsResponse": {
+      "description": "Fields: received, sent, retries, errors",
       "type": "object",
       "properties": {
         "errors": {

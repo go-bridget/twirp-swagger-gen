@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package com.example;
+option go_package = "./rpc";
+
+import "google/protobuf/timestamp.proto";
+
+message TheType {
+    oneof min_time_opt {
+        google.protobuf.Timestamp min_time    = 3;
+        Empty                     no_min_time = 4;
+    }
+}
