@@ -24,13 +24,15 @@ type SwaggerWriter struct {
 
 	hostname    string
 	filename    string
+	include     string
 	packageName string
 }
 
-func NewSwaggerWriter(filename string, hostname string) *SwaggerWriter {
+func NewSwaggerWriter(filename, hostname, include string) *SwaggerWriter {
 	return &SwaggerWriter{
 		filename: filename,
 		hostname: hostname,
+		include:  include,
 		Swagger:  &spec.Swagger{},
 	}
 }
@@ -66,7 +68,7 @@ func (sw *SwaggerWriter) Import(i *proto.Import) {
 
 	log.Debugf("importing %s", i.Filename)
 
-	definition, err := loadProtoFile(i.Filename)
+	definition, err := loadProtoFile(i.Filename, sw.include)
 	if err != nil {
 		log.Infof("Can't load %s, err=%s, ignoring", i.Filename, err)
 		return
@@ -332,10 +334,13 @@ func (sw *SwaggerWriter) Get() []byte {
 	return b
 }
 
-func loadProtoFile(filename string) (*proto.Proto, error) {
+func loadProtoFile(filename, include string) (*proto.Proto, error) {
 	reader, err := os.Open(filename)
 	if err != nil {
-		return nil, err
+		reader, err = os.Open(path.Join(include, filename))
+		if err != nil {
+			return nil, err
+		}
 	}
 	defer reader.Close()
 
@@ -343,14 +348,14 @@ func loadProtoFile(filename string) (*proto.Proto, error) {
 	return parser.Parse()
 }
 
-func parse(hostname, filename, output string) error {
+func parse(hostname, filename, output, include string) error {
 	if filename == output {
 		return errors.New("output file must be different than input file")
 	}
 
-	writer := NewSwaggerWriter(filename, hostname)
+	writer := NewSwaggerWriter(filename, hostname, include)
 
-	definition, err := loadProtoFile(filename)
+	definition, err := loadProtoFile(filename, include)
 	if err != nil {
 		return err
 	}
@@ -363,12 +368,14 @@ func parse(hostname, filename, output string) error {
 
 func main() {
 	var (
-		in   string
-		out  string
-		host string
+		in      string
+		out     string
+		host    string
+		include string
 	)
 	flag.StringVar(&in, "in", "", "Input source .proto file")
 	flag.StringVar(&out, "out", "", "Output swagger.json file")
+	flag.StringVar(&include, "I", "", "Extra include path for .proto files")
 	flag.StringVar(&host, "host", "api.example.com", "API host name")
 	flag.Parse()
 
@@ -382,7 +389,7 @@ func main() {
 		log.Fatalf("Missing parameter: -host [api.example.com]")
 	}
 
-	if err := parse(host, in, out); err != nil {
+	if err := parse(host, in, out, include); err != nil {
 		log.WithError(err).Fatal("exit with error")
 	}
 }
