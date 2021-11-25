@@ -18,7 +18,16 @@
   "paths": {},
   "definitions": {
     "com.exampleTheType": {
-      "type": "object"
+      "description": "Fields: min_time, no_min_time",
+      "type": "object",
+      "properties": {
+        "min_time": {
+          "$ref": "#/definitions/googleprotobufTimestamp"
+        },
+        "no_min_time": {
+          "$ref": "#/definitions/comexampleEmpty"
+        }
+      }
     },
     "google.protobufTimestamp": {
       "description": "All minutes are 60 seconds long. Leap seconds are \"smeared\" so that no leap\nsecond table is needed for interpretation, using a [24-hour linear\nsmear](https://developers.google.com/time/smear).\n\nFields: seconds, nanos",

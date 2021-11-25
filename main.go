@@ -204,98 +204,114 @@ func (sw *SwaggerWriter) Message(msg *proto.Message) {
 
 	var fieldOrder = []string{}
 
+	allFields := msg.Elements
+
 	for _, element := range msg.Elements {
 		switch val := element.(type) {
 		case *proto.Oneof:
-			// TODO: feel free to submit a PR. The fields listed in "oneof"
-			// should be unpacked and handled like *proto.NormalField below
-			log.Infof("Need to implement *proto.Oneof, want to make a PR?")
-			break
-		case *proto.NormalField:
-			var (
-				fieldTitle       = comment(val.Field.Comment)
-				fieldDescription = description(val.Field.Comment)
-				fieldName        = val.Field.Name
-				fieldType        = val.Field.Type
-				fieldFormat      = val.Field.Type
-			)
-			if fieldType == "bool" {
-				fieldType = "boolean"
-				fieldFormat = "boolean"
-			}
-			if fieldType == "int64" || fieldType == "uint64" {
-				fieldType = "string"
-			}
-			if strings.HasPrefix(fieldType, "int") || strings.HasPrefix(fieldType, "uint") {
-				fieldType = "integer"
-			}
-			if fieldType != "boolean" && fieldType == fieldFormat {
-				fieldFormat = ""
-			}
+			// We're unpacking val.Elements into the field list,
+			// which may or may not be correct. The oneof semantics
+			// likely bring in edge-cases.
+			allFields = append(allFields, val.Elements...)
+		}
+	}
 
-			fieldOrder = append(fieldOrder, fieldName)
+	addField := func(field *proto.Field, repeated bool) {
+		var (
+			fieldTitle       = comment(field.Comment)
+			fieldDescription = description(field.Comment)
+			fieldName        = field.Name
+			fieldType        = field.Type
+			fieldFormat      = field.Type
+		)
+		if fieldType == "bool" {
+			fieldType = "boolean"
+			fieldFormat = "boolean"
+		}
+		if fieldType == "int64" || fieldType == "uint64" {
+			fieldType = "string"
+		}
+		if strings.HasPrefix(fieldType, "int") || strings.HasPrefix(fieldType, "uint") {
+			fieldType = "integer"
+		}
+		if fieldType != "boolean" && fieldType == fieldFormat {
+			fieldFormat = ""
+		}
 
-			if _, ok := find(allowedValues, fieldType); ok {
-				fieldSchema := spec.Schema{
-					SchemaProps: spec.SchemaProps{
-						Title:       fieldTitle,
-						Description: fieldDescription,
-						Type:        spec.StringOrArray([]string{fieldType}),
-						Format:      fieldFormat,
-					},
-				}
-				if val.Repeated {
-					fieldSchema.Title = ""
-					fieldSchema.Description = ""
-					fieldSchema.Format = ""
-					schemaProps[fieldName] = spec.Schema{
-						SchemaProps: spec.SchemaProps{
-							Title:       fieldTitle,
-							Description: fieldDescription,
-							Type:        spec.StringOrArray([]string{"array"}),
-							Format:      fieldFormat,
-							Items: &spec.SchemaOrArray{
-								Schema: &fieldSchema,
-							},
-						},
-					}
-				} else {
-					schemaProps[fieldName] = fieldSchema
-				}
-				continue
+		fieldOrder = append(fieldOrder, fieldName)
+
+		if _, ok := find(allowedValues, fieldType); ok {
+			fieldSchema := spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Title:       fieldTitle,
+					Description: fieldDescription,
+					Type:        spec.StringOrArray([]string{fieldType}),
+					Format:      fieldFormat,
+				},
 			}
-
-			// Prefix rich type with package name
-			if !strings.Contains(fieldType, ".") {
-				fieldType = sw.packageName + "." + fieldType
-			}
-			ref := fmt.Sprintf("#/definitions/%s", strings.ReplaceAll(fieldType, ".", ""))
-			// fmt.Sprintf("#/definitions/%s%s", sw.packageName, fieldType)
-
-			if val.Repeated {
+			if repeated {
+				fieldSchema.Title = ""
+				fieldSchema.Description = ""
+				fieldSchema.Format = ""
 				schemaProps[fieldName] = spec.Schema{
 					SchemaProps: spec.SchemaProps{
 						Title:       fieldTitle,
 						Description: fieldDescription,
 						Type:        spec.StringOrArray([]string{"array"}),
+						Format:      fieldFormat,
 						Items: &spec.SchemaOrArray{
-							Schema: &spec.Schema{
-								SchemaProps: spec.SchemaProps{
-									Ref: spec.MustCreateRef(ref),
-								},
-							},
+							Schema: &fieldSchema,
 						},
 					},
 				}
-				continue
+			} else {
+				schemaProps[fieldName] = fieldSchema
 			}
+			return
+		}
+
+		// Prefix rich type with package name
+		if !strings.Contains(fieldType, ".") {
+			fieldType = sw.packageName + "." + fieldType
+		}
+		ref := fmt.Sprintf("#/definitions/%s", strings.ReplaceAll(fieldType, ".", ""))
+		// fmt.Sprintf("#/definitions/%s%s", sw.packageName, fieldType)
+
+		if repeated {
 			schemaProps[fieldName] = spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Title:       fieldTitle,
 					Description: fieldDescription,
-					Ref:         spec.MustCreateRef(ref),
+					Type:        spec.StringOrArray([]string{"array"}),
+					Items: &spec.SchemaOrArray{
+						Schema: &spec.Schema{
+							SchemaProps: spec.SchemaProps{
+								Ref: spec.MustCreateRef(ref),
+							},
+						},
+					},
 				},
 			}
+			return
+		}
+		schemaProps[fieldName] = spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Title:       fieldTitle,
+				Description: fieldDescription,
+				Ref:         spec.MustCreateRef(ref),
+			},
+		}
+	}
+
+	for _, element := range allFields {
+		switch val := element.(type) {
+		case *proto.Comment:
+		case *proto.Oneof:
+			// Nothing.
+		case *proto.OneOfField:
+			addField(val.Field, false)
+		case *proto.NormalField:
+			addField(val.Field, val.Repeated)
 		default:
 			log.Infof("Unknown field type: %T", element)
 		}
