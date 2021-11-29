@@ -31,7 +31,7 @@ func main() {
 				continue
 			}
 
-			writer := swagger.NewWriter(in, *hostname, "")
+			writer := swagger.NewWriter(in, *hostname)
 			if err := writer.WalkFile(); err != nil {
 				return err
 			}

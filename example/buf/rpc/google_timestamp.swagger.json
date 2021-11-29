@@ -25,7 +25,8 @@
       "type": "object",
       "properties": {
         "min_time": {
-          "$ref": "#/definitions/googleprotobufTimestamp"
+          "type": "string",
+          "format": "date-time"
         },
         "no_min_time": {
           "$ref": "#/definitions/comexampleEmpty"

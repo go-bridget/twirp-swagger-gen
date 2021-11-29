@@ -18,15 +18,13 @@ type Writer struct {
 
 	hostname    string
 	filename    string
-	include     string
 	packageName string
 }
 
-func NewWriter(filename, hostname, include string) *Writer {
+func NewWriter(filename, hostname string) *Writer {
 	return &Writer{
 		filename: filename,
 		hostname: hostname,
-		include:  include,
 		Swagger:  &spec.Swagger{},
 	}
 }
@@ -60,11 +58,16 @@ func (sw *Writer) Import(i *proto.Import) {
 		return
 	}
 
+	// timestamps are handled as string of date-time
+	if strings.Contains(i.Filename, "google/protobuf/timestamp.proto") {
+		return
+	}
+
 	log.Debugf("importing %s", i.Filename)
 
-	definition, err := loadProtoFile(i.Filename, sw.include)
+	definition, err := loadProtoFile(i.Filename)
 	if err != nil {
-		log.Infof("Can't load %s, err=%s, ignoring", i.Filename, err)
+		log.Infof("Can't load %s, err=%s, ignoring (want to make PR?)", i.Filename, err)
 		return
 	}
 
@@ -232,6 +235,13 @@ func (sw *Writer) Message(msg *proto.Message) {
 			fieldFormat = ""
 		}
 
+		// TODO: fix mappings, add known types support
+		// https://developers.google.com/protocol-buffers/docs/proto3#json
+		if fieldType == "google.protobuf.Timestamp" {
+			fieldType = "string"
+			fieldFormat = "date-time"
+		}
+
 		fieldOrder = append(fieldOrder, fieldName)
 
 		if _, ok := find(allowedValues, fieldType); ok {
@@ -346,7 +356,7 @@ func (sw *Writer) Get() []byte {
 }
 
 func (sw *Writer) WalkFile() error {
-	definition, err := loadProtoFile(sw.filename, sw.include)
+	definition, err := loadProtoFile(sw.filename)
 	if err != nil {
 		return err
 	}
@@ -357,13 +367,10 @@ func (sw *Writer) WalkFile() error {
 	return nil
 }
 
-func loadProtoFile(filename, include string) (*proto.Proto, error) {
+func loadProtoFile(filename string) (*proto.Proto, error) {
 	reader, err := os.Open(filename)
 	if err != nil {
-		reader, err = os.Open(path.Join(include, filename))
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 	defer reader.Close()
 
