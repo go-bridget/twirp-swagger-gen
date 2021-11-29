@@ -16,7 +16,7 @@
   },
   "host": "api.example.com",
   "paths": {
-    "/twirp/apm.ApmService/Add": {
+    "/api/v1/apm.ApmService/Add": {
       "post": {
         "tags": [
           "ApmService"
@@ -43,7 +43,7 @@
         }
       }
     },
-    "/twirp/apm.ApmService/Stats": {
+    "/api/v1/apm.ApmService/Stats": {
       "post": {
         "tags": [
           "ApmService"

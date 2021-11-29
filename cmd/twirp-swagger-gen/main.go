@@ -11,12 +11,12 @@ import (
 
 var _ = spew.Dump
 
-func parse(hostname, filename, output string) error {
+func parse(hostname, filename, output, prefix string) error {
 	if filename == output {
 		return errors.New("output file must be different than input file")
 	}
 
-	writer := swagger.NewWriter(filename, hostname)
+	writer := swagger.NewWriter(filename, hostname, prefix)
 	if err := writer.WalkFile(); err != nil {
 		return err
 	}
@@ -25,13 +25,15 @@ func parse(hostname, filename, output string) error {
 
 func main() {
 	var (
-		in   string
-		out  string
-		host string
+		in         string
+		out        string
+		host       string
+		pathPrefix string
 	)
 	flag.StringVar(&in, "in", "", "Input source .proto file")
 	flag.StringVar(&out, "out", "", "Output swagger.json file")
 	flag.StringVar(&host, "host", "api.example.com", "API host name")
+	flag.StringVar(&pathPrefix, "pathPrefix", "/twirp", "Twrirp server path prefix")
 	flag.Parse()
 
 	if in == "" {
@@ -44,7 +46,7 @@ func main() {
 		log.Fatalf("Missing parameter: -host [api.example.com]")
 	}
 
-	if err := parse(host, in, out); err != nil {
+	if err := parse(host, in, out, pathPrefix); err != nil {
 		log.WithError(err).Fatal("exit with error")
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/apex/log"
@@ -16,16 +17,21 @@ import (
 type Writer struct {
 	*spec.Swagger
 
-	hostname    string
 	filename    string
+	hostname    string
+	pathPrefix  string
 	packageName string
 }
 
-func NewWriter(filename, hostname string) *Writer {
+func NewWriter(filename, hostname, pathPrefix string) *Writer {
+	if pathPrefix == "" {
+		pathPrefix = "/twirp"
+	}
 	return &Writer{
-		filename: filename,
-		hostname: hostname,
-		Swagger:  &spec.Swagger{},
+		filename:   filename,
+		hostname:   hostname,
+		pathPrefix: pathPrefix,
+		Swagger:    &spec.Swagger{},
 	}
 }
 
@@ -132,7 +138,8 @@ func (sw *Writer) RPC(rpc *proto.RPC) {
 		panic("parent is not proto.service")
 	}
 
-	pathName := fmt.Sprintf("/twirp/%s.%s/%s", sw.packageName, parent.Name, rpc.Name)
+	pathName := filepath.Join("/"+sw.pathPrefix+"/", sw.packageName+"."+parent.Name, rpc.Name)
+	// pathName := fmt.Sprintf("/twirp/%s.%s/%s", sw.packageName, parent.Name, rpc.Name)
 
 	sw.Swagger.Paths.Paths[pathName] = spec.PathItem{
 		PathItemProps: spec.PathItemProps{
