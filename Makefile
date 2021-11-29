@@ -3,7 +3,7 @@
 all: build test clean
 
 build:
-	go build -o build/twirp-swagger-gen main.go
+	go build -o build/ github.com/go-bridget/twirp-swagger-gen/cmd/...
 
 test:
 	./build/twirp-swagger-gen -in example/example.proto -out example/example.swagger.json -host test.example.com -I include
