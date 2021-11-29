@@ -17,6 +17,9 @@
   "host": "test.example.com",
   "paths": {},
   "definitions": {
+    "com.exampleEmpty": {
+      "type": "object"
+    },
     "com.exampleTheType": {
       "description": "Fields: min_time, no_min_time",
       "type": "object",
