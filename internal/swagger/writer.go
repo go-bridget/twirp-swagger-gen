@@ -339,9 +339,22 @@ func (sw *Writer) Save(filename string) error {
 	body := sw.Get()
 	return ioutil.WriteFile(filename, body, os.ModePerm^0111)
 }
+
 func (sw *Writer) Get() []byte {
 	b, _ := json.MarshalIndent(sw, "", "  ")
 	return b
+}
+
+func (sw *Writer) WalkFile() error {
+	definition, err := loadProtoFile(sw.filename, sw.include)
+	if err != nil {
+		return err
+	}
+
+	// main file for all the relevant info
+	proto.Walk(definition, sw.Handlers()...)
+
+	return nil
 }
 
 func loadProtoFile(filename, include string) (*proto.Proto, error) {

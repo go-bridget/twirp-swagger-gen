@@ -2,31 +2,14 @@ package main
 
 import (
 	"flag"
-	"os"
-	"path"
 
 	"github.com/apex/log"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/emicklei/proto"
 	"github.com/go-bridget/twirp-swagger-gen/internal/swagger"
 	"github.com/pkg/errors"
 )
 
 var _ = spew.Dump
-
-func loadProtoFile(filename, include string) (*proto.Proto, error) {
-	reader, err := os.Open(filename)
-	if err != nil {
-		reader, err = os.Open(path.Join(include, filename))
-		if err != nil {
-			return nil, err
-		}
-	}
-	defer reader.Close()
-
-	parser := proto.NewParser(reader)
-	return parser.Parse()
-}
 
 func parse(hostname, filename, output, include string) error {
 	if filename == output {
@@ -34,15 +17,9 @@ func parse(hostname, filename, output, include string) error {
 	}
 
 	writer := swagger.NewWriter(filename, hostname, include)
-
-	definition, err := loadProtoFile(filename, include)
-	if err != nil {
+	if err := writer.WalkFile(); err != nil {
 		return err
 	}
-
-	// main file for all the relevant info
-	proto.Walk(definition, writer.Handlers()...)
-
 	return writer.Save(output)
 }
 
