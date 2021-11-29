@@ -8,7 +8,7 @@ import (
 	"github.com/apex/log"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/emicklei/proto"
-	"github.com/go-bridget/twirp-swagger-gen/swagger"
+	"github.com/go-bridget/twirp-swagger-gen/internal/swagger"
 	"github.com/pkg/errors"
 )
 
@@ -33,7 +33,7 @@ func parse(hostname, filename, output, include string) error {
 		return errors.New("output file must be different than input file")
 	}
 
-	writer := swagger.NewSwaggerWriter(filename, hostname, include)
+	writer := swagger.NewWriter(filename, hostname, include)
 
 	definition, err := loadProtoFile(filename, include)
 	if err != nil {

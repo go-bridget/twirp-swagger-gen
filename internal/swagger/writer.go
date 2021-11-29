@@ -13,7 +13,7 @@ import (
 	"github.com/go-openapi/spec"
 )
 
-type SwaggerWriter struct {
+type Writer struct {
 	*spec.Swagger
 
 	hostname    string
@@ -22,8 +22,8 @@ type SwaggerWriter struct {
 	packageName string
 }
 
-func NewSwaggerWriter(filename, hostname, include string) *SwaggerWriter {
-	return &SwaggerWriter{
+func NewWriter(filename, hostname, include string) *Writer {
+	return &Writer{
 		filename: filename,
 		hostname: hostname,
 		include:  include,
@@ -31,7 +31,7 @@ func NewSwaggerWriter(filename, hostname, include string) *SwaggerWriter {
 	}
 }
 
-func (sw *SwaggerWriter) Package(pkg *proto.Package) {
+func (sw *Writer) Package(pkg *proto.Package) {
 	sw.Swagger.Swagger = "2.0"
 	sw.Schemes = []string{"http", "https"}
 	sw.Produces = []string{"application/json"}
@@ -51,7 +51,7 @@ func (sw *SwaggerWriter) Package(pkg *proto.Package) {
 	sw.packageName = pkg.Name
 }
 
-func (sw *SwaggerWriter) Import(i *proto.Import) {
+func (sw *Writer) Import(i *proto.Import) {
 	// the exclusion here is more about path traversal than it is
 	// about the structure of google proto messages. The annotations
 	// could serve to document a REST API, which goes beyond what
@@ -123,7 +123,7 @@ func description(comment *proto.Comment) string {
 	return strings.Join(result, "\n")
 }
 
-func (sw *SwaggerWriter) RPC(rpc *proto.RPC) {
+func (sw *Writer) RPC(rpc *proto.RPC) {
 	parent, ok := rpc.Parent.(*proto.Service)
 	if !ok {
 		panic("parent is not proto.service")
@@ -174,7 +174,7 @@ func (sw *SwaggerWriter) RPC(rpc *proto.RPC) {
 	}
 }
 
-func (sw *SwaggerWriter) Message(msg *proto.Message) {
+func (sw *Writer) Message(msg *proto.Message) {
 	definitionName := fmt.Sprintf("%s%s", sw.packageName, msg.Name)
 
 	schemaProps := make(map[string]spec.Schema)
@@ -326,7 +326,7 @@ func (sw *SwaggerWriter) Message(msg *proto.Message) {
 	}
 }
 
-func (sw *SwaggerWriter) Handlers() []proto.Handler {
+func (sw *Writer) Handlers() []proto.Handler {
 	return []proto.Handler{
 		proto.WithPackage(sw.Package),
 		proto.WithRPC(sw.RPC),
@@ -335,11 +335,11 @@ func (sw *SwaggerWriter) Handlers() []proto.Handler {
 	}
 }
 
-func (sw *SwaggerWriter) Save(filename string) error {
+func (sw *Writer) Save(filename string) error {
 	body := sw.Get()
 	return ioutil.WriteFile(filename, body, os.ModePerm^0111)
 }
-func (sw *SwaggerWriter) Get() []byte {
+func (sw *Writer) Get() []byte {
 	b, _ := json.MarshalIndent(sw, "", "  ")
 	return b
 }
