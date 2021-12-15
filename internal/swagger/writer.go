@@ -1,43 +1,41 @@
-package main
+package swagger
 
 import (
-	"flag"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
-	"encoding/json"
-	"io/ioutil"
-
 	"github.com/apex/log"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/emicklei/proto"
 	"github.com/go-openapi/spec"
-	"github.com/pkg/errors"
 )
 
-var _ = spew.Dump
-
-type SwaggerWriter struct {
+type Writer struct {
 	*spec.Swagger
 
-	hostname    string
 	filename    string
-	include     string
+	hostname    string
+	pathPrefix  string
 	packageName string
 }
 
-func NewSwaggerWriter(filename, hostname, include string) *SwaggerWriter {
-	return &SwaggerWriter{
-		filename: filename,
-		hostname: hostname,
-		include:  include,
-		Swagger:  &spec.Swagger{},
+func NewWriter(filename, hostname, pathPrefix string) *Writer {
+	if pathPrefix == "" {
+		pathPrefix = "/twirp"
+	}
+	return &Writer{
+		filename:   filename,
+		hostname:   hostname,
+		pathPrefix: pathPrefix,
+		Swagger:    &spec.Swagger{},
 	}
 }
 
-func (sw *SwaggerWriter) Package(pkg *proto.Package) {
+func (sw *Writer) Package(pkg *proto.Package) {
 	sw.Swagger.Swagger = "2.0"
 	sw.Schemes = []string{"http", "https"}
 	sw.Produces = []string{"application/json"}
@@ -57,7 +55,7 @@ func (sw *SwaggerWriter) Package(pkg *proto.Package) {
 	sw.packageName = pkg.Name
 }
 
-func (sw *SwaggerWriter) Import(i *proto.Import) {
+func (sw *Writer) Import(i *proto.Import) {
 	// the exclusion here is more about path traversal than it is
 	// about the structure of google proto messages. The annotations
 	// could serve to document a REST API, which goes beyond what
@@ -66,11 +64,16 @@ func (sw *SwaggerWriter) Import(i *proto.Import) {
 		return
 	}
 
+	// timestamps are handled as string of date-time
+	if strings.Contains(i.Filename, "google/protobuf/timestamp.proto") {
+		return
+	}
+
 	log.Debugf("importing %s", i.Filename)
 
-	definition, err := loadProtoFile(i.Filename, sw.include)
+	definition, err := loadProtoFile(i.Filename)
 	if err != nil {
-		log.Infof("Can't load %s, err=%s, ignoring", i.Filename, err)
+		log.Infof("Can't load %s, err=%s, ignoring (want to make PR?)", i.Filename, err)
 		return
 	}
 
@@ -129,13 +132,14 @@ func description(comment *proto.Comment) string {
 	return strings.Join(result, "\n")
 }
 
-func (sw *SwaggerWriter) RPC(rpc *proto.RPC) {
+func (sw *Writer) RPC(rpc *proto.RPC) {
 	parent, ok := rpc.Parent.(*proto.Service)
 	if !ok {
 		panic("parent is not proto.service")
 	}
 
-	pathName := fmt.Sprintf("/twirp/%s.%s/%s", sw.packageName, parent.Name, rpc.Name)
+	pathName := filepath.Join("/"+sw.pathPrefix+"/", sw.packageName+"."+parent.Name, rpc.Name)
+	// pathName := fmt.Sprintf("/twirp/%s.%s/%s", sw.packageName, parent.Name, rpc.Name)
 
 	sw.Swagger.Paths.Paths[pathName] = spec.PathItem{
 		PathItemProps: spec.PathItemProps{
@@ -180,7 +184,7 @@ func (sw *SwaggerWriter) RPC(rpc *proto.RPC) {
 	}
 }
 
-func (sw *SwaggerWriter) Message(msg *proto.Message) {
+func (sw *Writer) Message(msg *proto.Message) {
 	definitionName := fmt.Sprintf("%s%s", sw.packageName, msg.Name)
 
 	schemaProps := make(map[string]spec.Schema)
@@ -236,6 +240,13 @@ func (sw *SwaggerWriter) Message(msg *proto.Message) {
 		}
 		if fieldType != "boolean" && fieldType == fieldFormat {
 			fieldFormat = ""
+		}
+
+		// TODO: fix mappings, add known types support
+		// https://developers.google.com/protocol-buffers/docs/proto3#json
+		if fieldType == "google.protobuf.Timestamp" {
+			fieldType = "string"
+			fieldFormat = "date-time"
 		}
 
 		fieldOrder = append(fieldOrder, fieldName)
@@ -332,7 +343,7 @@ func (sw *SwaggerWriter) Message(msg *proto.Message) {
 	}
 }
 
-func (sw *SwaggerWriter) Handlers() []proto.Handler {
+func (sw *Writer) Handlers() []proto.Handler {
 	return []proto.Handler{
 		proto.WithPackage(sw.Package),
 		proto.WithRPC(sw.RPC),
@@ -341,71 +352,35 @@ func (sw *SwaggerWriter) Handlers() []proto.Handler {
 	}
 }
 
-func (sw *SwaggerWriter) Save(filename string) error {
+func (sw *Writer) Save(filename string) error {
 	body := sw.Get()
 	return ioutil.WriteFile(filename, body, os.ModePerm^0111)
 }
-func (sw *SwaggerWriter) Get() []byte {
+
+func (sw *Writer) Get() []byte {
 	b, _ := json.MarshalIndent(sw, "", "  ")
 	return b
 }
 
-func loadProtoFile(filename, include string) (*proto.Proto, error) {
-	reader, err := os.Open(filename)
-	if err != nil {
-		reader, err = os.Open(path.Join(include, filename))
-		if err != nil {
-			return nil, err
-		}
-	}
-	defer reader.Close()
-
-	parser := proto.NewParser(reader)
-	return parser.Parse()
-}
-
-func parse(hostname, filename, output, include string) error {
-	if filename == output {
-		return errors.New("output file must be different than input file")
-	}
-
-	writer := NewSwaggerWriter(filename, hostname, include)
-
-	definition, err := loadProtoFile(filename, include)
+func (sw *Writer) WalkFile() error {
+	definition, err := loadProtoFile(sw.filename)
 	if err != nil {
 		return err
 	}
 
 	// main file for all the relevant info
-	proto.Walk(definition, writer.Handlers()...)
+	proto.Walk(definition, sw.Handlers()...)
 
-	return writer.Save(output)
+	return nil
 }
 
-func main() {
-	var (
-		in      string
-		out     string
-		host    string
-		include string
-	)
-	flag.StringVar(&in, "in", "", "Input source .proto file")
-	flag.StringVar(&out, "out", "", "Output swagger.json file")
-	flag.StringVar(&include, "I", "", "Extra include path for .proto files")
-	flag.StringVar(&host, "host", "api.example.com", "API host name")
-	flag.Parse()
+func loadProtoFile(filename string) (*proto.Proto, error) {
+	reader, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
 
-	if in == "" {
-		log.Fatalf("Missing parameter: -in [input.proto]")
-	}
-	if out == "" {
-		log.Fatalf("Missing parameter: -out [output.proto]")
-	}
-	if host == "" {
-		log.Fatalf("Missing parameter: -host [api.example.com]")
-	}
-
-	if err := parse(host, in, out, include); err != nil {
-		log.WithError(err).Fatal("exit with error")
-	}
+	parser := proto.NewParser(reader)
+	return parser.Parse()
 }

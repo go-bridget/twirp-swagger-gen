@@ -1,0 +1,37 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "title": "google_timestamp.proto",
+    "version": "version not set"
+  },
+  "host": "api.example.com",
+  "paths": {},
+  "definitions": {
+    "com.exampleEmpty": {
+      "type": "object"
+    },
+    "com.exampleTheType": {
+      "description": "Fields: min_time, no_min_time",
+      "type": "object",
+      "properties": {
+        "min_time": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "no_min_time": {
+          "$ref": "#/definitions/comexampleEmpty"
+        }
+      }
+    }
+  }
+}

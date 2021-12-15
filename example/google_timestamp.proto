@@ -5,6 +5,8 @@ option go_package = "./rpc";
 
 import "google/protobuf/timestamp.proto";
 
+message Empty {}
+
 message TheType {
     oneof min_time_opt {
         google.protobuf.Timestamp min_time    = 3;

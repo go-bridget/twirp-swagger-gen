@@ -1,0 +1,116 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "title": "example.proto",
+    "version": "version not set"
+  },
+  "host": "api.example.com",
+  "paths": {
+    "/api/v1/apm.ApmService/Add": {
+      "post": {
+        "tags": [
+          "ApmService"
+        ],
+        "summary": "Add APM payload",
+        "operationId": "Add",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apmAddRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apmAddResponse"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/apm.ApmService/Stats": {
+      "post": {
+        "tags": [
+          "ApmService"
+        ],
+        "summary": "Stats for APM dispatch",
+        "operationId": "Stats",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apmStatsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apmStatsResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "apmAddRequest": {
+      "description": "Fields: targetURL, payload",
+      "type": "object",
+      "properties": {
+        "payload": {
+          "type": "string"
+        },
+        "targetURL": {
+          "type": "string"
+        }
+      }
+    },
+    "apmAddResponse": {
+      "type": "object"
+    },
+    "apmStatsRequest": {
+      "type": "object"
+    },
+    "apmStatsResponse": {
+      "description": "Fields: received, sent, retries, errors",
+      "type": "object",
+      "properties": {
+        "errors": {
+          "type": "string",
+          "format": "int64"
+        },
+        "received": {
+          "type": "string",
+          "format": "int64"
+        },
+        "retries": {
+          "type": "string",
+          "format": "int64"
+        },
+        "sent": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    }
+  }
+}

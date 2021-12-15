@@ -1,0 +1,5 @@
+version: v1
+plugins:
+  - name: twirp-swagger
+    opt: hostname=api.example.com,path_prefix=/api/v1
+    out: example/buf
