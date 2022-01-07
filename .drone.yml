@@ -1,0 +1,19 @@
+workspace:
+  base: /microservice
+
+kind: pipeline
+name: build
+
+steps:
+- name: build
+  image: golang:1.17-alpine
+  pull: if-not-exists
+  commands:
+  - apk add make
+  - make build test test-buf clean
+
+- name: lint
+  image: golangci/golangci-lint:v1.38.0
+  pull: if-not-exists
+  commands:
+  - golangci-lint run --enable-all ./...

@@ -1,18 +1,22 @@
-.PHONY: all build test
+.PHONY: all build test test-buf clean google
 
 PATH := $(PWD)/build:$(PATH)
 
-all: build test clean
+all:
+	@drone exec
 
 build:
-	go build -o build/ github.com/go-bridget/twirp-swagger-gen/cmd/...
+	go build -o build/ ./cmd/...
 
 test:
 	twirp-swagger-gen -in example/example.proto -out example/simple/example.swagger.json -host test.example.com
 	twirp-swagger-gen -in example/google_timestamp.proto -out example/simple/google_timestamp.swagger.json -host test.example.com
 
+test-buf:
 	# use go run so we do not have install buf command
-	go run github.com/bufbuild/buf/cmd/buf@latest generate --template example/buf.gen.yaml --path example
+	# go get -u github.com/bufbuild/buf/cmd/...@v1.0.0-rc10
+	GOBIN=/usr/local/bin go install github.com/bufbuild/buf/cmd/...@v1.0.0-rc10
+	buf generate --template example/buf.gen.yaml --path example
 
 clean:
 	go fmt ./...
