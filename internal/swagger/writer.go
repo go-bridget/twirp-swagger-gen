@@ -217,6 +217,9 @@ func (sw *Writer) Message(msg *proto.Message) {
 			// which may or may not be correct. The oneof semantics
 			// likely bring in edge-cases.
 			allFields = append(allFields, val.Elements...)
+		default:
+			// No need to unpack for *proto.NormalField,...
+			log.Debugf("prepare: uknown field type: %T", element)
 		}
 	}
 
