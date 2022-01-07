@@ -18,7 +18,9 @@ func parse(hostname, filename, output, prefix string) error {
 
 	writer := swagger.NewWriter(filename, hostname, prefix)
 	if err := writer.WalkFile(); err != nil {
-		return err
+		if !errors.Is(err, swagger.ErrNoServiceDefinition) {
+			return err
+		}
 	}
 	return writer.Save(output)
 }

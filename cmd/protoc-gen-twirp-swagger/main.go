@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 
 	"github.com/apex/log"
@@ -26,15 +27,19 @@ func main() {
 	opts.Run(func(gen *protogen.Plugin) error {
 		for _, f := range gen.Files {
 			in := f.Desc.Path()
-			log.Debugf("generating:%q", in)
+			log.Debugf("generating: %q", in)
 
 			if !f.Generate {
-				log.Debugf("skip generating:%q", in)
+				log.Debugf("skip generating: %q", in)
 				continue
 			}
 
 			writer := swagger.NewWriter(in, *hostname, *pathPrefix)
 			if err := writer.WalkFile(); err != nil {
+				if errors.Is(err, swagger.ErrNoServiceDefinition) {
+					log.Debugf("skip writing file, %s: %q", err, in)
+					continue
+				}
 				return err
 			}
 
