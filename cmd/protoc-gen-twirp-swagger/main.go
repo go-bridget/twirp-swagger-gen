@@ -19,6 +19,7 @@ func main() {
 	var flags flag.FlagSet
 	hostname := flags.String("hostname", "example.com", "")
 	pathPrefix := flags.String("path_prefix", "/twirp", "")
+	outputSuffix := flags.String("output_suffix", ".swagger.json", "")
 	opts := protogen.Options{
 		ParamFunc: flags.Set,
 	}
@@ -37,7 +38,7 @@ func main() {
 				return err
 			}
 
-			out := f.GeneratedFilenamePrefix + ".swagger.json"
+			out := f.GeneratedFilenamePrefix + *outputSuffix
 			g := gen.NewGeneratedFile(out, f.GoImportPath)
 			if _, err := g.Write(writer.Get()); err != nil {
 				return err
