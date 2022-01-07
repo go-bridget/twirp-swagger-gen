@@ -248,11 +248,10 @@ func (sw *Writer) Message(msg *proto.Message) {
 			fieldFormat = ""
 		}
 
-		// TODO: fix mappings, add known types support
-		// https://developers.google.com/protocol-buffers/docs/proto3#json
-		if fieldType == "google.protobuf.Timestamp" {
-			fieldType = "string"
-			fieldFormat = "date-time"
+		p, ok := typeAliases[fieldType]
+		if ok {
+			fieldType = p.Type
+			fieldFormat = p.Format
 		}
 
 		fieldOrder = append(fieldOrder, fieldName)
