@@ -2,6 +2,7 @@ package swagger
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -13,6 +14,8 @@ import (
 	"github.com/emicklei/proto"
 	"github.com/go-openapi/spec"
 )
+
+var ErrNoServiceDefinition = errors.New("no service definition found")
 
 type Writer struct {
 	*spec.Swagger
@@ -374,6 +377,9 @@ func (sw *Writer) WalkFile() error {
 	// main file for all the relevant info
 	proto.Walk(definition, sw.Handlers()...)
 
+	if len(sw.Swagger.Paths.Paths) == 0 {
+		return ErrNoServiceDefinition
+	}
 	return nil
 }
 
