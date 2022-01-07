@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package apm;
+
+option go_package = "example.com/apm";
+
+message AddRequest {
+	string targetURL = 1;
+	string payload = 2;
+}
+message AddResponse {}

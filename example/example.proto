@@ -4,6 +4,8 @@ package apm;
 
 option go_package = "example.com/apm";
 
+import "example/example_add.proto";
+
 service ApmService {
 	// Stats for APM dispatch
 	rpc Stats(StatsRequest) returns (StatsResponse);
@@ -19,9 +21,3 @@ message StatsResponse {
 	int64 retries = 3;
 	int64 errors = 4;
 }
-
-message AddRequest {
-	string targetURL = 1;
-	string payload = 2;
-}
-message AddResponse {}
