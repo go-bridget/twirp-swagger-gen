@@ -4,13 +4,38 @@ A Twirp RPC Swagger/OpenAPI 2.0 generator
 
 # Usage
 
+Installing the generator for protoc/buf:
+
 ```
-go get github.com/go-bridget/twirp-swagger-gen
-go run github.com/go-bridget/twirp-swagger-gen \
+go get -u github.com/go-bridget/twirp-swagger-gen
+```
+
+This should pull in the cmd/ folder as well. Installing just the binaries:
+
+```
+go install github.com/go-bridget/twirp-swagger-gen/cmd/...
+```
+
+Running the standalone version:
+
+```
+twirp-swagger-gen \
 	-in example/example.proto \
 	-out example/example.swagger.json \
 	-host test.example.com
 ```
+
+Running the protoc code with [buf.build](https://buf.build) (buf.gen.yaml):
+
+```
+version: v1
+plugins:
+  - name: twirp-swagger
+    opt: hostname=api.example.com,path_prefix=/api/v1
+    out: example/buf
+```
+
+Other? Try to figure it out, then open a PR for the README.
 
 # Why?
 
