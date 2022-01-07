@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package apm;
+package apm.v1;
 
 option go_package = "example.com/apm";
 

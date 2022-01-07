@@ -159,7 +159,7 @@ func (sw *Writer) RPC(rpc *proto.RPC) {
 										Description: "A successful response.",
 										Schema: &spec.Schema{
 											SchemaProps: spec.SchemaProps{
-												Ref: spec.MustCreateRef(fmt.Sprintf("#/definitions/%s%s", sw.packageName, rpc.ReturnsType)),
+												Ref: spec.MustCreateRef(fmt.Sprintf("#/definitions/%s_%s", sw.packageName, rpc.ReturnsType)),
 											},
 										},
 									},
@@ -175,7 +175,7 @@ func (sw *Writer) RPC(rpc *proto.RPC) {
 								Required: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: spec.MustCreateRef(fmt.Sprintf("#/definitions/%s%s", sw.packageName, rpc.RequestType)),
+										Ref: spec.MustCreateRef(fmt.Sprintf("#/definitions/%s_%s", sw.packageName, rpc.RequestType)),
 									},
 								},
 							},
@@ -188,7 +188,7 @@ func (sw *Writer) RPC(rpc *proto.RPC) {
 }
 
 func (sw *Writer) Message(msg *proto.Message) {
-	definitionName := fmt.Sprintf("%s%s", sw.packageName, msg.Name)
+	definitionName := fmt.Sprintf("%s_%s", sw.packageName, msg.Name)
 
 	schemaProps := make(map[string]spec.Schema)
 
@@ -289,10 +289,9 @@ func (sw *Writer) Message(msg *proto.Message) {
 
 		// Prefix rich type with package name
 		if !strings.Contains(fieldType, ".") {
-			fieldType = sw.packageName + "." + fieldType
+			fieldType = sw.packageName + "_" + fieldType
 		}
-		ref := fmt.Sprintf("#/definitions/%s", strings.ReplaceAll(fieldType, ".", ""))
-		// fmt.Sprintf("#/definitions/%s%s", sw.packageName, fieldType)
+		ref := fmt.Sprintf("#/definitions/%s", fieldType)
 
 		if repeated {
 			schemaProps[fieldName] = spec.Schema{
@@ -336,6 +335,8 @@ func (sw *Writer) Message(msg *proto.Message) {
 
 	schemaDesc := description(msg.Comment)
 	if len(fieldOrder) > 0 {
+		// This is required to infer order, as json object keys
+		// don't keep their order. Should have been an array.
 		schemaDesc = schemaDesc + "\n\nFields: " + strings.Join(fieldOrder, ", ")
 	}
 

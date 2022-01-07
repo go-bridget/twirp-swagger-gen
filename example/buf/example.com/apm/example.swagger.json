@@ -16,7 +16,7 @@
   },
   "host": "api.example.com",
   "paths": {
-    "/api/v1/apm.ApmService/Add": {
+    "/api/v1/apm.v1.ApmService/Add": {
       "post": {
         "tags": [
           "ApmService"
@@ -29,7 +29,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/apmAddRequest"
+              "$ref": "#/definitions/apm.v1_AddRequest"
             }
           }
         ],
@@ -37,13 +37,13 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apmAddResponse"
+              "$ref": "#/definitions/apm.v1_AddResponse"
             }
           }
         }
       }
     },
-    "/api/v1/apm.ApmService/Stats": {
+    "/api/v1/apm.v1.ApmService/Stats": {
       "post": {
         "tags": [
           "ApmService"
@@ -56,7 +56,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/apmStatsRequest"
+              "$ref": "#/definitions/apm.v1_StatsRequest"
             }
           }
         ],
@@ -64,7 +64,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apmStatsResponse"
+              "$ref": "#/definitions/apm.v1_StatsResponse"
             }
           }
         }
@@ -72,7 +72,7 @@
     }
   },
   "definitions": {
-    "apmAddRequest": {
+    "apm.v1_AddRequest": {
       "description": "Fields: targetURL, payload",
       "type": "object",
       "properties": {
@@ -84,13 +84,13 @@
         }
       }
     },
-    "apmAddResponse": {
+    "apm.v1_AddResponse": {
       "type": "object"
     },
-    "apmStatsRequest": {
+    "apm.v1_StatsRequest": {
       "type": "object"
     },
-    "apmStatsResponse": {
+    "apm.v1_StatsResponse": {
       "description": "Fields: received, sent, retries, errors",
       "type": "object",
       "properties": {
