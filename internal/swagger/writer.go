@@ -247,6 +247,10 @@ func (sw *Writer) Message(msg *proto.Message) {
 		if fieldType != "boolean" && fieldType == fieldFormat {
 			fieldFormat = ""
 		}
+		if fieldType == "double" {
+			fieldType = typeAliases["google.protobuf.DoubleValue"].Type
+			fieldFormat = typeAliases["google.protobuf.DoubleValue"].Format
+		}
 
 		p, ok := typeAliases[fieldType]
 		if ok {
@@ -327,6 +331,8 @@ func (sw *Writer) Message(msg *proto.Message) {
 			addField(val.Field, false)
 		case *proto.NormalField:
 			addField(val.Field, val.Repeated)
+		case *proto.MapField:
+			addField(val.Field, false)
 		default:
 			log.Infof("Unknown field type: %T", element)
 		}
