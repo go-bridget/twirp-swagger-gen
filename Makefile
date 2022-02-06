@@ -14,8 +14,8 @@ test:
 
 test-buf:
 	# use go run so we do not have install buf command
-	# go get -u github.com/bufbuild/buf/cmd/...@v1.0.0-rc10
-	GOBIN=/usr/local/bin go install github.com/bufbuild/buf/cmd/...@v1.0.0-rc10
+	# go get -u github.com/bufbuild/buf/cmd/...@v1.0.0-rc12
+	GOBIN=/usr/local/bin go install github.com/bufbuild/buf/cmd/...@v1.0.0-rc12
 	buf generate --template example/buf.gen.yaml --path example
 
 clean:
