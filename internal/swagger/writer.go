@@ -234,24 +234,14 @@ func (sw *Writer) Message(msg *proto.Message) {
 			fieldType        = field.Type
 			fieldFormat      = field.Type
 		)
-		if fieldType == "bool" {
-			fieldType = "boolean"
-			fieldFormat = "boolean"
-		}
-		if fieldType == "int64" || fieldType == "uint64" {
-			fieldType = "string"
-		}
-		if strings.HasPrefix(fieldType, "int") || strings.HasPrefix(fieldType, "uint") {
-			fieldType = "integer"
-		}
-		if fieldType != "boolean" && fieldType == fieldFormat {
-			fieldFormat = ""
-		}
 
 		p, ok := typeAliases[fieldType]
 		if ok {
 			fieldType = p.Type
 			fieldFormat = p.Format
+		}
+		if fieldType == fieldFormat {
+			fieldFormat = ""
 		}
 
 		fieldOrder = append(fieldOrder, fieldName)

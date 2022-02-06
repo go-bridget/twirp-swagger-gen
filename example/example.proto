@@ -20,4 +20,22 @@ message StatsResponse {
 	int64 sent = 2;
 	int64 retries = 3;
 	int64 errors = 4;
+
+	double   a = 10;
+	float    b = 11;
+
+        int32    c = 12;
+	uint32   e = 14;
+	sint32   g = 16;
+	fixed32  i = 18;
+	sfixed32 k = 20;
+
+	int64    d = 13;
+	uint64   f = 15;
+	sint64   h = 17;
+	fixed64  j = 19;
+	sfixed64 l = 21;
+
+	bool     m = 22;
+        bytes    n = 23;
 }
