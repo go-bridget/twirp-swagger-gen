@@ -325,6 +325,8 @@ func (sw *Writer) Message(msg *proto.Message) {
 			// Nothing.
 		case *proto.OneOfField:
 			addField(val.Field, false)
+		case *proto.MapField:
+			addField(val.Field, false)
 		case *proto.NormalField:
 			addField(val.Field, val.Repeated)
 		default:
