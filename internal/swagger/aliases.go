@@ -52,7 +52,7 @@ var typeAliases = map[string]struct {
 	},
 	"google.protobuf.UInt32Value": {
 		Type:   "integer",
-		Format: "int64",
+		Format: "uint32",
 	},
 	"google.protobuf.Int64Value": {
 		Type:   "string",
