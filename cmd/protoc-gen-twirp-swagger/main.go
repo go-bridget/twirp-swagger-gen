@@ -34,7 +34,7 @@ func main() {
 				continue
 			}
 
-			writer := swagger.NewWriter(in, *hostname, *pathPrefix)
+			writer := swagger.NewWriter(in, *hostname, *pathPrefix, []string{}) // TODO: support --proto_path
 			if err := writer.WalkFile(); err != nil {
 				if errors.Is(err, swagger.ErrNoServiceDefinition) {
 					log.Debugf("skip writing file, %s: %q", err, in)

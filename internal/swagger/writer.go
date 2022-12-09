@@ -24,9 +24,10 @@ type Writer struct {
 	hostname    string
 	pathPrefix  string
 	packageName string
+	protoPath   []string
 }
 
-func NewWriter(filename, hostname, pathPrefix string) *Writer {
+func NewWriter(filename, hostname, pathPrefix string, protoPath []string) *Writer {
 	if pathPrefix == "" {
 		pathPrefix = "/twirp"
 	}
@@ -35,6 +36,7 @@ func NewWriter(filename, hostname, pathPrefix string) *Writer {
 		hostname:   hostname,
 		pathPrefix: pathPrefix,
 		Swagger:    &spec.Swagger{},
+		protoPath:  protoPath,
 	}
 }
 
@@ -74,7 +76,7 @@ func (sw *Writer) Import(i *proto.Import) {
 
 	log.Debugf("importing %s", i.Filename)
 
-	definition, err := loadProtoFile(i.Filename)
+	definition, err := loadProtoFile(i.Filename, sw.protoPath)
 	if err != nil {
 		log.Infof("Can't load %s, err=%s, ignoring (want to make PR?)", i.Filename, err)
 		return
@@ -361,7 +363,7 @@ func (sw *Writer) Get() []byte {
 }
 
 func (sw *Writer) WalkFile() error {
-	definition, err := loadProtoFile(sw.filename)
+	definition, err := loadProtoFile(sw.filename, sw.protoPath)
 	if err != nil {
 		return err
 	}
@@ -375,7 +377,13 @@ func (sw *Writer) WalkFile() error {
 	return nil
 }
 
-func loadProtoFile(filename string) (*proto.Proto, error) {
+func loadProtoFile(filename string, path []string) (*proto.Proto, error) {
+	for _, loc := range path {
+		if _, err := os.Stat(filepath.Join(loc, filename)); err == nil {
+			filename = filepath.Join(loc, filename)
+			break
+		}
+	}
 	reader, err := os.Open(filename)
 	if err != nil {
 		return nil, err
