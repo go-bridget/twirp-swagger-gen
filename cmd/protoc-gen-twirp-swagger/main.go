@@ -21,6 +21,7 @@ func main() {
 	hostname := flags.String("hostname", "example.com", "")
 	pathPrefix := flags.String("path_prefix", "/twirp", "")
 	outputSuffix := flags.String("output_suffix", ".swagger.json", "")
+	camelCase := flags.Bool("camel_case", false, "")
 	opts := protogen.Options{
 		ParamFunc: flags.Set,
 	}
@@ -34,7 +35,7 @@ func main() {
 				continue
 			}
 
-			writer := swagger.NewWriter(in, *hostname, *pathPrefix)
+			writer := swagger.NewWriter(in, *hostname, *pathPrefix, *camelCase)
 			if err := writer.WalkFile(); err != nil {
 				if errors.Is(err, swagger.ErrNoServiceDefinition) {
 					log.Debugf("skip writing file, %s: %q", err, in)
