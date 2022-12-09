@@ -24,9 +24,10 @@ type Writer struct {
 	hostname    string
 	pathPrefix  string
 	packageName string
+	camelCase   bool
 }
 
-func NewWriter(filename, hostname, pathPrefix string) *Writer {
+func NewWriter(filename, hostname, pathPrefix string, camelCase bool) *Writer {
 	if pathPrefix == "" {
 		pathPrefix = "/twirp"
 	}
@@ -35,6 +36,7 @@ func NewWriter(filename, hostname, pathPrefix string) *Writer {
 		hostname:   hostname,
 		pathPrefix: pathPrefix,
 		Swagger:    &spec.Swagger{},
+		camelCase:  camelCase,
 	}
 }
 
@@ -235,6 +237,10 @@ func (sw *Writer) Message(msg *proto.Message) {
 			fieldFormat      = field.Type
 		)
 
+		if sw.camelCase {
+			fieldName = JSONCamelCase(fieldName)
+		}
+
 		p, ok := typeAliases[fieldType]
 		if ok {
 			fieldType = p.Type
@@ -384,4 +390,27 @@ func loadProtoFile(filename string) (*proto.Proto, error) {
 
 	parser := proto.NewParser(reader)
 	return parser.Parse()
+}
+
+// JSONCamelCase converts a snake_case identifier to a camelCase identifier,
+// according to the protobuf JSON specification.
+// Copied from internal pkg: https://pkg.go.dev/google.golang.org/protobuf/internal/strs#JSONCamelCase
+func JSONCamelCase(s string) string {
+	var b []byte
+	var wasUnderscore bool
+	for i := 0; i < len(s); i++ { // proto identifiers are always ASCII
+		c := s[i]
+		if c != '_' {
+			if wasUnderscore && isASCIILower(c) {
+				c -= 'a' - 'A' // convert to uppercase
+			}
+			b = append(b, c)
+		}
+		wasUnderscore = c == '_'
+	}
+	return string(b)
+}
+
+func isASCIILower(c byte) bool {
+	return 'a' <= c && c <= 'z'
 }
