@@ -154,7 +154,7 @@ func (sw *Writer) RPC(rpc *proto.RPC) {
 					Responses: &spec.Responses{
 						ResponsesProps: spec.ResponsesProps{
 							StatusCodeResponses: map[int]spec.Response{
-								200: spec.Response{
+								200: {
 									ResponseProps: spec.ResponseProps{
 										Description: "A successful response.",
 										Schema: &spec.Schema{
@@ -168,7 +168,7 @@ func (sw *Writer) RPC(rpc *proto.RPC) {
 						},
 					},
 					Parameters: []spec.Parameter{
-						spec.Parameter{
+						{
 							ParamProps: spec.ParamProps{
 								Name:     "body",
 								In:       "body",
@@ -187,12 +187,27 @@ func (sw *Writer) RPC(rpc *proto.RPC) {
 	}
 }
 
+func (sw *Writer) Enum(enum *proto.Enum) {
+	definitionName := fmt.Sprintf("%s_%s", sw.packageName, enum.Name)
+	schemaDesc := description(enum.Comment)
+	schemaProps := make(map[string]spec.Schema)
+
+	sw.Swagger.Definitions[definitionName] = spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Title:       comment(enum.Comment),
+			Description: strings.TrimSpace(schemaDesc),
+			Type:        spec.StringOrArray([]string{"object"}),
+			Properties:  schemaProps,
+		},
+	}
+}
+
 func (sw *Writer) Message(msg *proto.Message) {
 	definitionName := fmt.Sprintf("%s_%s", sw.packageName, msg.Name)
 
 	schemaProps := make(map[string]spec.Schema)
 
-	var allowedValues = []string{
+	allowedValues := []string{
 		"boolean",
 		"integer",
 		"number",
@@ -209,7 +224,7 @@ func (sw *Writer) Message(msg *proto.Message) {
 		return -1, false
 	}
 
-	var fieldOrder = []string{}
+	fieldOrder := []string{}
 
 	allFields := msg.Elements
 
@@ -343,6 +358,7 @@ func (sw *Writer) Message(msg *proto.Message) {
 
 func (sw *Writer) Handlers() []proto.Handler {
 	return []proto.Handler{
+		proto.WithEnum(sw.Enum),
 		proto.WithPackage(sw.Package),
 		proto.WithRPC(sw.RPC),
 		proto.WithMessage(sw.Message),
@@ -352,7 +368,7 @@ func (sw *Writer) Handlers() []proto.Handler {
 
 func (sw *Writer) Save(filename string) error {
 	body := sw.Get()
-	return ioutil.WriteFile(filename, body, os.ModePerm^0111)
+	return ioutil.WriteFile(filename, body, os.ModePerm^0o111)
 }
 
 func (sw *Writer) Get() []byte {
