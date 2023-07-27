@@ -7,13 +7,13 @@ A Twirp RPC Swagger/OpenAPI 2.0 generator
 Installing the generator for protoc/buf:
 
 ```
-go get -u github.com/go-bridget/twirp-swagger-gen
+go install github.com/go-bridget/twirp-swagger-gen/cmd/twirp-swagger-gen@latest
 ```
 
 This should pull in the cmd/ folder as well. Installing just the binaries:
 
 ```
-go install github.com/go-bridget/twirp-swagger-gen/cmd/...
+go install github.com/go-bridget/twirp-swagger-gen/cmd/protoc-gen-twirp-swagger@latest
 ```
 
 Running the standalone version:
