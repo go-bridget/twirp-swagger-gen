@@ -16,7 +16,7 @@ service ApmService {
 
 message StatsRequest {}
 message StatsResponse {
-	int64 received = 1;
+	optional int64 received = 1;
 	int64 sent = 2;
 	int64 retries = 3;
 	int64 errors = 4;

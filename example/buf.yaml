@@ -1,5 +1,5 @@
 version: v1
-name: buf.build/go-bridget/twirp-swagger-gen
+name: buf.build/ethanquix/twirp-swagger-gen
 deps:
   - buf.build/googleapis/googleapis
 lint:
