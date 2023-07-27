@@ -1,0 +1,171 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "title": "example.proto",
+    "version": "version not set"
+  },
+  "host": "test.example.com",
+  "paths": {
+    "/twirp/apm.v1.ApmService/Add": {
+      "post": {
+        "tags": [
+          "ApmService"
+        ],
+        "summary": "Add APM payload",
+        "operationId": "Add",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apm.v1_AddRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apm.v1_AddResponse"
+            }
+          }
+        }
+      }
+    },
+    "/twirp/apm.v1.ApmService/Stats": {
+      "post": {
+        "tags": [
+          "ApmService"
+        ],
+        "summary": "Stats for APM dispatch",
+        "operationId": "Stats",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apm.v1_StatsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apm.v1_StatsResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "apm.v1_AddRequest": {
+      "description": "Fields: targetURL, payload",
+      "type": "object",
+      "properties": {
+        "payload": {
+          "type": "string"
+        },
+        "targetURL": {
+          "type": "string"
+        }
+      }
+    },
+    "apm.v1_AddResponse": {
+      "type": "object"
+    },
+    "apm.v1_StatsRequest": {
+      "type": "object"
+    },
+    "apm.v1_StatsResponse": {
+      "description": "Fields: received, sent, retries, errors, a, b, c, e, g, i, k, d, f, h, j, l, m, n",
+      "type": "object",
+      "properties": {
+        "a": {
+          "type": "number",
+          "format": "double"
+        },
+        "b": {
+          "type": "number",
+          "format": "float"
+        },
+        "c": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "d": {
+          "type": "string",
+          "format": "int64"
+        },
+        "e": {
+          "type": "integer",
+          "format": "uint32"
+        },
+        "errors": {
+          "type": "string",
+          "format": "int64"
+        },
+        "f": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "g": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "h": {
+          "type": "string",
+          "format": "int64"
+        },
+        "i": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "j": {
+          "type": "string",
+          "format": "int64"
+        },
+        "k": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "l": {
+          "type": "string",
+          "format": "int64"
+        },
+        "m": {
+          "type": "boolean"
+        },
+        "n": {
+          "type": "string",
+          "format": "byte"
+        },
+        "received": {
+          "type": "string",
+          "format": "int64"
+        },
+        "retries": {
+          "type": "string",
+          "format": "int64"
+        },
+        "sent": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    }
+  }
+}
