@@ -148,7 +148,7 @@ func (sw *Writer) RPC(rpc *proto.RPC) {
 		PathItemProps: spec.PathItemProps{
 			Post: &spec.Operation{
 				OperationProps: spec.OperationProps{
-					ID:      rpc.Name,
+					ID:      sw.packageName + "." + parent.Name + "." + rpc.Name,
 					Tags:    []string{parent.Name},
 					Summary: comment(rpc.Comment),
 					Responses: &spec.Responses{
@@ -319,6 +319,8 @@ func (sw *Writer) Message(msg *proto.Message) {
 			addField(val.Field, false)
 		case *proto.NormalField:
 			addField(val.Field, val.Repeated)
+		case *proto.Enum:
+			// Nothing.
 		default:
 			log.Infof("Unknown field type: %T", element)
 		}
@@ -347,6 +349,31 @@ func (sw *Writer) Handlers() []proto.Handler {
 		proto.WithRPC(sw.RPC),
 		proto.WithMessage(sw.Message),
 		proto.WithImport(sw.Import),
+		proto.WithEnum(sw.Enum),
+	}
+}
+
+func (sw *Writer) Enum(enum *proto.Enum) {
+	schemaDesc := description(enum.Comment)
+	definitionName := fmt.Sprintf("%s_%s", sw.packageName, enum.Name)
+	specEnum := func(elements []proto.Visitee) []interface{} {
+		enumSet := make([]interface{}, 0, len(elements))
+		for _, element := range enum.Elements {
+			switch val := element.(type) {
+			case *proto.EnumField:
+				enumSet = append(enumSet, val.Name)
+			}
+		}
+		return enumSet
+	}
+
+	sw.Swagger.Definitions[definitionName] = spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Title:       comment(enum.Comment),
+			Description: strings.TrimSpace(schemaDesc),
+			Type:        spec.StringOrArray{"string"},
+			Enum:        specEnum(enum.Elements),
+		},
 	}
 }
 
