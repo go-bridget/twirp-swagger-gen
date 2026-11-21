@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package apm.v2;
+
+import "example/example_common.proto";
+
+service CatalogService {
+	// Look up a catalog entry
+	rpc Lookup(LookupRequest) returns (LookupResponse);
+}
+
+message LookupRequest {
+	common.Thing thing = 1;
+	common.Level max_level = 2;
+}
+
+message LookupResponse {
+	repeated common.Thing things = 1;
+}

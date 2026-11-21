@@ -1,0 +1,93 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "title": "example_cross_package.proto",
+    "version": "version not set"
+  },
+  "host": "test.example.com",
+  "paths": {
+    "/twirp/apm.v2.CatalogService/Lookup": {
+      "post": {
+        "tags": [
+          "CatalogService"
+        ],
+        "summary": "Look up a catalog entry",
+        "operationId": "Lookup",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apm.v2_LookupRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apm.v2_LookupResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "apm.v2_LookupRequest": {
+      "description": "Fields: thing, max_level",
+      "type": "object",
+      "properties": {
+        "max_level": {
+          "$ref": "#/definitions/common.Level"
+        },
+        "thing": {
+          "$ref": "#/definitions/common.Thing"
+        }
+      }
+    },
+    "apm.v2_LookupResponse": {
+      "description": "Fields: things",
+      "type": "object",
+      "properties": {
+        "things": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/common.Thing"
+          }
+        }
+      }
+    },
+    "common.Level": {
+      "type": "string",
+      "enum": [
+        "LEVEL_UNSPECIFIED",
+        "LEVEL_LOW",
+        "LEVEL_HIGH"
+      ]
+    },
+    "common.Thing": {
+      "description": "Fields: name, level",
+      "type": "object",
+      "properties": {
+        "level": {
+          "$ref": "#/definitions/common.Level"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

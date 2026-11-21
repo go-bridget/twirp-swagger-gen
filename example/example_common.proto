@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package common;
+
+message Thing {
+	string name = 1;
+	Level level = 2;
+}
+
+enum Level {
+	LEVEL_UNSPECIFIED = 0;
+	LEVEL_LOW = 1;
+	LEVEL_HIGH = 2;
+}

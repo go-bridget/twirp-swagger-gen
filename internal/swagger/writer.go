@@ -40,8 +40,35 @@ type Writer struct {
 	hostname    string
 	pathPrefix  string
 	packageName string
+	rootPackage string
 	protoPath   []string
 	camelCase   bool
+}
+
+// definitionID returns the key a message or enum definition is written
+// under. A type of the file's own package keeps the package_Type form the
+// document's paths use; a type read from an import is named package.Type,
+// which is how a field references it.
+func (sw *Writer) definitionID(name string) string {
+	if sw.packageName != sw.rootPackage {
+		return sw.packageName + "." + name
+	}
+	return sw.packageName + "_" + name
+}
+
+// definitionRef returns the definition a field of type fieldType references.
+// A qualified type names its definition as written, except a type of the
+// root package, whose definition keeps the package_Type form.
+func (sw *Writer) definitionRef(fieldType string) string {
+	if strings.Contains(fieldType, ".") {
+		if root := sw.rootPackage + "."; sw.rootPackage != "" && strings.HasPrefix(fieldType, root) {
+			if name := strings.TrimPrefix(fieldType, root); !strings.Contains(name, ".") {
+				return sw.rootPackage + "_" + name
+			}
+		}
+		return fieldType
+	}
+	return sw.definitionID(fieldType)
 }
 
 func NewWriter(opts Options) *Writer {
@@ -88,6 +115,7 @@ func (sw *Writer) Package(pkg *proto.Package) {
 	}
 
 	sw.packageName = pkg.Name
+	sw.rootPackage = pkg.Name
 }
 
 func (sw *Writer) Import(i *proto.Import) {
@@ -191,7 +219,7 @@ func (sw *Writer) RPC(rpc *proto.RPC) {
 										Description: "A successful response.",
 										Schema: &spec.Schema{
 											SchemaProps: spec.SchemaProps{
-												Ref: spec.MustCreateRef(fmt.Sprintf("#/definitions/%s_%s", sw.packageName, rpc.ReturnsType)),
+												Ref: spec.MustCreateRef(fmt.Sprintf("#/definitions/%s", sw.definitionRef(rpc.ReturnsType))),
 											},
 										},
 									},
@@ -207,7 +235,7 @@ func (sw *Writer) RPC(rpc *proto.RPC) {
 								Required: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: spec.MustCreateRef(fmt.Sprintf("#/definitions/%s_%s", sw.packageName, rpc.RequestType)),
+										Ref: spec.MustCreateRef(fmt.Sprintf("#/definitions/%s", sw.definitionRef(rpc.RequestType))),
 									},
 								},
 							},
@@ -220,7 +248,7 @@ func (sw *Writer) RPC(rpc *proto.RPC) {
 }
 
 func (sw *Writer) Message(msg *proto.Message) {
-	definitionName := fmt.Sprintf("%s_%s", sw.packageName, msg.Name)
+	definitionName := sw.definitionID(msg.Name)
 
 	schemaProps := make(map[string]spec.Schema)
 
@@ -312,11 +340,9 @@ func (sw *Writer) Message(msg *proto.Message) {
 			return
 		}
 
-		// Prefix rich type with package name
-		if !strings.Contains(fieldType, ".") {
-			fieldType = sw.packageName + "_" + fieldType
-		}
-		ref := fmt.Sprintf("#/definitions/%s", fieldType)
+		// A qualified type names its definition as written; a plain type
+		// takes the name of the package it is defined in.
+		ref := fmt.Sprintf("#/definitions/%s", sw.definitionRef(fieldType))
 
 		if repeated {
 			schemaProps[fieldName] = spec.Schema{
@@ -390,7 +416,7 @@ func (sw *Writer) Handlers() []proto.Handler {
 }
 
 func (sw *Writer) Enum(enum *proto.Enum) {
-	definitionName := fmt.Sprintf("%s_%s", sw.packageName, enum.Name)
+	definitionName := sw.definitionID(enum.Name)
 
 	// An enum renders as a string whose values are the proto names, which
 	// is what protojson emits for an enum field.

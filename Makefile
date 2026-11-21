@@ -12,6 +12,7 @@ test:
 	twirp-swagger-gen -in example/example.proto -out example/simple/example.swagger.json -host test.example.com
 	twirp-swagger-gen -in example/google_timestamp.proto -out example/simple/google_timestamp.swagger.json -host test.example.com
 	twirp-swagger-gen -in example/example_enum.proto -out example/simple/example_enum.swagger.json -host test.example.com
+	twirp-swagger-gen -in example/example_cross_package.proto -out example/simple/example_cross_package.swagger.json -host test.example.com
 
 test-buf:
 	GOBIN=/usr/local/bin go install github.com/bufbuild/buf/cmd/...@v1.0.0-rc12
