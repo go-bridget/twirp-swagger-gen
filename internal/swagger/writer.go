@@ -119,7 +119,7 @@ func (sw *Writer) Import(i *proto.Import) {
 	}
 
 	// additional files walked for messages and imports only
-	proto.Walk(definition, proto.WithPackage(withPackage), proto.WithImport(sw.Import), proto.WithMessage(sw.Message))
+	proto.Walk(definition, proto.WithPackage(withPackage), proto.WithImport(sw.Import), proto.WithMessage(sw.Message), proto.WithEnum(sw.Enum))
 
 	sw.packageName = oldPackageName
 }
@@ -180,7 +180,7 @@ func (sw *Writer) RPC(rpc *proto.RPC) {
 		PathItemProps: spec.PathItemProps{
 			Post: &spec.Operation{
 				OperationProps: spec.OperationProps{
-					ID:      sw.packageName + "." + parent.Name + "." + rpc.Name,
+					ID:      rpc.Name,
 					Tags:    []string{parent.Name},
 					Summary: comment(rpc.Comment),
 					Responses: &spec.Responses{
@@ -390,25 +390,23 @@ func (sw *Writer) Handlers() []proto.Handler {
 }
 
 func (sw *Writer) Enum(enum *proto.Enum) {
-	schemaDesc := description(enum.Comment)
 	definitionName := fmt.Sprintf("%s_%s", sw.packageName, enum.Name)
-	specEnum := func(elements []proto.Visitee) []interface{} {
-		enumSet := make([]interface{}, 0, len(elements))
-		for _, element := range enum.Elements {
-			switch val := element.(type) {
-			case *proto.EnumField:
-				enumSet = append(enumSet, val.Name)
-			}
+
+	// An enum renders as a string whose values are the proto names, which
+	// is what protojson emits for an enum field.
+	values := make([]interface{}, 0, len(enum.Elements))
+	for _, element := range enum.Elements {
+		if field, ok := element.(*proto.EnumField); ok {
+			values = append(values, field.Name)
 		}
-		return enumSet
 	}
 
 	sw.Swagger.Definitions[definitionName] = spec.Schema{
 		SchemaProps: spec.SchemaProps{
 			Title:       comment(enum.Comment),
-			Description: strings.TrimSpace(schemaDesc),
+			Description: strings.TrimSpace(description(enum.Comment)),
 			Type:        spec.StringOrArray{"string"},
-			Enum:        specEnum(enum.Elements),
+			Enum:        values,
 		},
 	}
 }

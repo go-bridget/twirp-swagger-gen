@@ -1,0 +1,76 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "title": "example_enum.proto",
+    "version": "version not set"
+  },
+  "host": "test.example.com",
+  "paths": {
+    "/twirp/apm.v1.GradeService/Grade": {
+      "post": {
+        "tags": [
+          "GradeService"
+        ],
+        "summary": "Read the grade of a target",
+        "operationId": "Grade",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apm.v1_GradeRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apm.v1_GradeResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "apm.v1_Grade": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ]
+    },
+    "apm.v1_GradeRequest": {
+      "description": "Fields: targetURL, payload, grade",
+      "type": "object",
+      "properties": {
+        "grade": {
+          "$ref": "#/definitions/apm.v1_Grade"
+        },
+        "payload": {
+          "type": "string"
+        },
+        "targetURL": {
+          "type": "string"
+        }
+      }
+    },
+    "apm.v1_GradeResponse": {
+      "type": "object"
+    }
+  }
+}

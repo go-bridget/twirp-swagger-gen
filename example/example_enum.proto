@@ -4,6 +4,10 @@ package apm.v1;
 
 option go_package = "example.com/apm";
 
+service GradeService {
+  // Read the grade of a target
+  rpc Grade(GradeRequest) returns (GradeResponse);
+}
 
 message GradeRequest {
   enum Grade {
