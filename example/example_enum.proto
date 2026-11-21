@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package apm.v1;
+
+option go_package = "example.com/apm";
+
+
+message GradeRequest {
+  enum Grade {
+    A = 0;
+    B = 1;
+    C = 2;
+    D = 3;
+  }
+  string targetURL = 1;
+  string payload = 2;
+  Grade grade = 3;
+}
+
+message GradeResponse {}
