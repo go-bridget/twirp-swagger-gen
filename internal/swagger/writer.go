@@ -17,6 +17,19 @@ import (
 
 var ErrNoServiceDefinition = errors.New("no service definition found")
 
+// Options configure a Writer.
+type Options struct {
+	// Filename is the input .proto file to read.
+	Filename string
+	// Hostname is the API host written to the document.
+	Hostname string
+	// PathPrefix is the Twirp server path prefix, "/twirp" when empty.
+	PathPrefix string
+	// ProtoPath lists directories, in order, to search for .proto files
+	// that are not found relative to the working directory.
+	ProtoPath []string
+}
+
 type Writer struct {
 	*spec.Swagger
 
@@ -24,18 +37,32 @@ type Writer struct {
 	hostname    string
 	pathPrefix  string
 	packageName string
+	protoPath   []string
 }
 
-func NewWriter(filename, hostname, pathPrefix string) *Writer {
-	if pathPrefix == "" {
-		pathPrefix = "/twirp"
+func NewWriter(opts Options) *Writer {
+	if opts.PathPrefix == "" {
+		opts.PathPrefix = "/twirp"
 	}
 	return &Writer{
-		filename:   filename,
-		hostname:   hostname,
-		pathPrefix: pathPrefix,
+		filename:   opts.Filename,
+		hostname:   opts.Hostname,
+		pathPrefix: opts.PathPrefix,
 		Swagger:    &spec.Swagger{},
+		protoPath:  opts.ProtoPath,
 	}
+}
+
+// ParseProtoPath splits a comma-separated list of proto search directories,
+// dropping empty entries, so that an unset flag searches nothing.
+func ParseProtoPath(list string) []string {
+	var paths []string
+	for _, dir := range strings.Split(list, ",") {
+		if dir = strings.TrimSpace(dir); dir != "" {
+			paths = append(paths, dir)
+		}
+	}
+	return paths
 }
 
 func (sw *Writer) Package(pkg *proto.Package) {
@@ -74,7 +101,7 @@ func (sw *Writer) Import(i *proto.Import) {
 
 	log.Debugf("importing %s", i.Filename)
 
-	definition, err := loadProtoFile(i.Filename)
+	definition, err := loadProtoFile(i.Filename, sw.protoPath)
 	if err != nil {
 		log.Infof("Can't load %s, err=%s, ignoring (want to make PR?)", i.Filename, err)
 		return
@@ -361,7 +388,7 @@ func (sw *Writer) Get() []byte {
 }
 
 func (sw *Writer) WalkFile() error {
-	definition, err := loadProtoFile(sw.filename)
+	definition, err := loadProtoFile(sw.filename, sw.protoPath)
 	if err != nil {
 		return err
 	}
@@ -375,7 +402,18 @@ func (sw *Writer) WalkFile() error {
 	return nil
 }
 
-func loadProtoFile(filename string) (*proto.Proto, error) {
+func loadProtoFile(filename string, protoPath []string) (*proto.Proto, error) {
+	// Search the proto path first, as protoc does, but leave an absolute
+	// path alone: it names one file and not one of several candidates.
+	if !filepath.IsAbs(filename) {
+		for _, dir := range protoPath {
+			candidate := filepath.Join(dir, filename)
+			if _, err := os.Stat(candidate); err == nil {
+				filename = candidate
+				break
+			}
+		}
+	}
 	reader, err := os.Open(filename)
 	if err != nil {
 		return nil, err

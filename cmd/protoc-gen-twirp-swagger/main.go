@@ -21,6 +21,7 @@ func main() {
 	hostname := flags.String("hostname", "example.com", "")
 	pathPrefix := flags.String("path_prefix", "/twirp", "")
 	outputSuffix := flags.String("output_suffix", ".swagger.json", "")
+	protoPath := flags.String("proto_path", "", "comma-separated directories to search for .proto files")
 	opts := protogen.Options{
 		ParamFunc: flags.Set,
 	}
@@ -34,7 +35,12 @@ func main() {
 				continue
 			}
 
-			writer := swagger.NewWriter(in, *hostname, *pathPrefix)
+			writer := swagger.NewWriter(swagger.Options{
+				Filename:   in,
+				Hostname:   *hostname,
+				PathPrefix: *pathPrefix,
+				ProtoPath:  swagger.ParseProtoPath(*protoPath),
+			})
 			if err := writer.WalkFile(); err != nil {
 				if errors.Is(err, swagger.ErrNoServiceDefinition) {
 					log.Debugf("skip writing file, %s: %q", err, in)
