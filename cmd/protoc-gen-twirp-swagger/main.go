@@ -22,6 +22,7 @@ func main() {
 	pathPrefix := flags.String("path_prefix", "/twirp", "")
 	outputSuffix := flags.String("output_suffix", ".swagger.json", "")
 	protoPath := flags.String("proto_path", "", "comma-separated directories to search for .proto files")
+	camelCase := flags.Bool("camel_case", false, "write field names in protojson camelCase")
 	opts := protogen.Options{
 		ParamFunc: flags.Set,
 	}
@@ -40,6 +41,7 @@ func main() {
 				Hostname:   *hostname,
 				PathPrefix: *pathPrefix,
 				ProtoPath:  swagger.ParseProtoPath(*protoPath),
+				CamelCase:  *camelCase,
 			})
 			if err := writer.WalkFile(); err != nil {
 				if errors.Is(err, swagger.ErrNoServiceDefinition) {

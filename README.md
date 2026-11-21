@@ -32,9 +32,10 @@ twirp-swagger-gen \
 | `-host` | `api.example.com` | API host name |
 | `-pathPrefix` | `/twirp` | Twirp server path prefix |
 | `-protoPath` | | Comma-separated directories searched for imported `.proto` files, in order |
+| `-camelCase` | `false` | Write field names as protojson camelCase, matching `twirp.WithServerJSONCamelCaseNames` |
 
 The protoc/buf plugin takes the same settings as plugin options: `hostname`,
-`path_prefix`, `output_suffix` and `proto_path`.
+`path_prefix`, `output_suffix`, `proto_path` and `camel_case`.
 
 Running the protoc code with [buf.build](https://buf.build) (buf.gen.yaml):
 

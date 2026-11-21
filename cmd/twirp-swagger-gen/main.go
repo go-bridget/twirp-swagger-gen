@@ -11,7 +11,7 @@ import (
 
 var _ = spew.Dump
 
-func parse(hostname, filename, output, prefix, protoPath string) error {
+func parse(hostname, filename, output, prefix, protoPath string, camelCase bool) error {
 	if filename == output {
 		return errors.New("output file must be different than input file")
 	}
@@ -21,6 +21,7 @@ func parse(hostname, filename, output, prefix, protoPath string) error {
 		Hostname:   hostname,
 		PathPrefix: prefix,
 		ProtoPath:  swagger.ParseProtoPath(protoPath),
+		CamelCase:  camelCase,
 	})
 	if err := writer.WalkFile(); err != nil {
 		if !errors.Is(err, swagger.ErrNoServiceDefinition) {
@@ -37,12 +38,14 @@ func main() {
 		host       string
 		pathPrefix string
 		protoPath  string
+		camelCase  bool
 	)
 	flag.StringVar(&in, "in", "", "Input source .proto file")
 	flag.StringVar(&out, "out", "", "Output swagger.json file")
 	flag.StringVar(&host, "host", "api.example.com", "API host name")
 	flag.StringVar(&pathPrefix, "pathPrefix", "/twirp", "Twirp server path prefix")
 	flag.StringVar(&protoPath, "protoPath", "", "Comma-separated directories to search for .proto files")
+	flag.BoolVar(&camelCase, "camelCase", false, "Write field names in protojson camelCase")
 	flag.Parse()
 
 	if in == "" {
@@ -55,7 +58,7 @@ func main() {
 		log.Fatalf("Missing parameter: -host [api.example.com]")
 	}
 
-	if err := parse(host, in, out, pathPrefix, protoPath); err != nil {
+	if err := parse(host, in, out, pathPrefix, protoPath, camelCase); err != nil {
 		log.WithError(err).Fatal("exit with error")
 	}
 }
