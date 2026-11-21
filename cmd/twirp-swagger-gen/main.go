@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"strings"
 
 	"github.com/apex/log"
 	"github.com/davecgh/go-spew/spew"
@@ -17,7 +16,12 @@ func parse(hostname, filename, output, prefix, protoPath string) error {
 		return errors.New("output file must be different than input file")
 	}
 
-	writer := swagger.NewWriter(filename, hostname, prefix, strings.Split(protoPath, ","))
+	writer := swagger.NewWriter(swagger.Options{
+		Filename:   filename,
+		Hostname:   hostname,
+		PathPrefix: prefix,
+		ProtoPath:  swagger.ParseProtoPath(protoPath),
+	})
 	if err := writer.WalkFile(); err != nil {
 		if !errors.Is(err, swagger.ErrNoServiceDefinition) {
 			return err
@@ -38,7 +42,7 @@ func main() {
 	flag.StringVar(&out, "out", "", "Output swagger.json file")
 	flag.StringVar(&host, "host", "api.example.com", "API host name")
 	flag.StringVar(&pathPrefix, "pathPrefix", "/twirp", "Twirp server path prefix")
-	flag.StringVar(&protoPath, "protoPath", "", "Path to .proto files (comma-separated))")
+	flag.StringVar(&protoPath, "protoPath", "", "Comma-separated directories to search for .proto files")
 	flag.Parse()
 
 	if in == "" {
